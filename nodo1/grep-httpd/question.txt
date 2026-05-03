@@ -1,0 +1,5 @@
+9. Find occurrences of "Listen" in apache config. (5 marks)
+Store output in /root/apache_listens
+
+✓ Solution & Explanation
+grep -ni "Listen" /etc/httpd/conf/httpd.conf > /root/apache_listens

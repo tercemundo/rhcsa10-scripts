@@ -1,0 +1,2 @@
+4. Resize LV to 300 MiB. (15 marks)
+Assume LV: /dev/vgdata/lvstore

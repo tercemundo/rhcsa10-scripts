@@ -1,0 +1,19 @@
+Create users and groups.
+• Group: opsmgrs
+• Users:
+o adam (member of opsmgrs)
+o linda (member of opsmgrs)
+o steve (no interactive shell, NOT in opsmgrs)
+• Password for all: Train@123
+
+✔ Solution & Explanation
+groupadd opsmgrs
+
+useradd -G opsmgrs adam
+useradd -G opsmgrs linda
+useradd -s /sbin/nologin steve
+
+echo "Train@123" | passwd --stdin adam
+echo "Train@123" | passwd --stdin linda
+echo "Train@123" | passwd --stdin steve
+

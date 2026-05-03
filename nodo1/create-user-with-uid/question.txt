@@ -1,0 +1,7 @@
+ Create user with specific UID
+• Username: roger
+• UID: 3456
+• Password: Train@456
+
+useradd -u 3456 roger
+echo "Train@456" | passwd --stdin roger

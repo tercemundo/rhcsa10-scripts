@@ -1,0 +1,1 @@
+Create swap on /dev/sdb 

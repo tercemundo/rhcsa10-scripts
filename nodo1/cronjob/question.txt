@@ -1,0 +1,9 @@
+6. Configure cron job for adam. (10 marks)
+Runs daily at 12:30:
+/bin/echo "sample text"
+
+✔ Solution & Explanation
+crontab -u adam -e
+Add:
+30 12 * * * /bin/echo "sample text"
+

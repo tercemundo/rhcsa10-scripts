@@ -1,0 +1,7 @@
+6. Create LV (name: testqa). (25 marks)
+• VG: qavg
+• Extents: 60
+• PE size: 16 MiB
+• Disk: /dev/sdc
+• Filesystem: ext3
+• Mount at /mnt/testqa (persistent)

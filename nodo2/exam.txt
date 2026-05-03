@@ -1,0 +1,271 @@
+Nehra Classes
+Igniting The Minds
+RHCSA 10 (EX200) Sample Exam Paper With Solution
+
+RHCSA v10 – Sample Exam Paper
+Duration: 2.5 hours
+Maximum Marks: 300
+Passing Score: 210 (70%)
+Exam Type: Hands-on Lab
+
+Instructions:
+1. All tasks must be performed on the assigned nodes (node-1/node-2).
+2. Do not remove or alter files unless explicitly instructed.
+3. Ensure that configuration changes persist after reboot.
+4. Partial marks will be awarded for partially-correct steps.
+5. Use only RHEL 10 standard tools (nmcli, parted, systemctl, firewall-cmd, etc.).
+6. All passwords used should follow security policy where required.
+
+Node-1 Questions
+
+1. Configure static networking and hostname. (25 marks)
+Use the following details:
+• IP Address: 192.168.56.50/24
+• Gateway: 192.168.56.1
+• DNS Server: 192.168.56.1
+• Domain: training.lab
+• Hostname: nodeA.training.lab
+
+✔ Solution & Explanation
+nmcli con mod ens160 ipv4.addresses 192.168.56.50/24
+nmcli con mod ens160 ipv4.gateway 192.168.56.1
+nmcli con mod ens160 ipv4.dns 192.168.56.1
+nmcli con mod ens160 ipv4.method manual
+nmcli con up ens160
+hostnamectl set-hostname nodeA.training.lab
+
+Explanation:
+We used nmcli to configure static IPv4 parameters and activated the connection. hostnamectl
+is persistent across reboots.
+
+2. Configure local repository (BaseOS & AppStream). (15 marks)
+Repository URLs:
+file:///mnt/OSBase
+file:///mnt/StreamApps
+
+✔ Solution & Explanation
+Create repo file:
+cat <<EOF > /etc/yum.repos.d/local.repo
+[OSBase]
+name=OS Base
+baseurl=file:///mnt/OSBase
+gpgcheck=0
+enabled=1
+
+[StreamApps]
+name=App Stream
+baseurl=file:///mnt/StreamApps
+gpgcheck=0
+enabled=1
+EOF
+Explanation:
+Both repositories point to locally-mounted directories. gpgcheck=0 avoids missing-key
+issues.
+
+3. Fix SELinux for webserver running on port 8082. (25 marks)
+Conditions:
+• HTML files in /var/www/html must be served
+• Apache listens on port 8082
+• Accessible via: http://192.168.56.50:8082
+
+✔ Solution & Explanation
+1. Allow non-standard port in SELinux:
+semanage port -a -t http_port_t -p tcp 8082
+2. Update Apache config (/etc/httpd/conf/httpd.conf):
+Listen 8082
+3. Start & enable service
+systemctl enable --now httpd
+4. SELinux restore contexts
+restorecon -Rv /var/www/html
+
+Explanation:
+Apache can only listen on SELinux-labeled ports. We add port 8082 to http_port_t.
+
+4. Create users and groups. (20 marks)
+• Group: opsmgrs
+• Users:
+o adam (member of opsmgrs)
+o linda (member of opsmgrs)
+o steve (no interactive shell, NOT in opsmgrs)
+• Password for all: Train@123
+
+✔ Solution & Explanation
+groupadd opsmgrs
+
+useradd -G opsmgrs adam
+useradd -G opsmgrs linda
+useradd -s /sbin/nologin steve
+
+echo "Train@123" | passwd --stdin adam
+echo "Train@123" | passwd --stdin linda
+echo "Train@123" | passwd --stdin steve
+
+Explanation:
+Supplementary group is added using -G. Shell restricted user uses /sbin/nologin.
+
+5. Configure autofs to automount remote user home. (25 marks)
+Server: serverC.training.lab (192.168.56.80)
+Exports: /export/rhome
+User home: /export/rhome/remuser21
+Automount at: /rhome/remuser21
+User password: Train@123
+
+✔ Solution & Explanation
+Install autofs:
+yum install -y autofs
+Edit /etc/auto.master:
+/rhome /etc/auto.rhome
+Create /etc/auto.rhome:
+remuser21 -rw 192.168.56.80:/export/rhome/remuser21
+Start service:
+systemctl enable --now autofs
+
+Explanation:
+Autofs mounts the NFS export only on access, reducing boot delays.
+
+6. Configure cron job for adam. (10 marks)
+Runs daily at 12:30:
+/bin/echo "sample text"
+
+✔ Solution & Explanation
+crontab -u adam -e
+Add:
+30 12 * * * /bin/echo "sample text"
+
+7. Configure NTP client. (10 marks)
+NTP server: time.training.lab
+
+✔ Solution & Explanation
+dnf install chrony -y
+sed -i 's/^server .*/server time.training.lab iburst/' /etc/chrony.conf
+systemctl enable --now chronyd
+
+8. Find files owned by steve and copy to /root/found.steve (10 marks)
+
+✔ Solution & Explanation
+mkdir -p /root/found.steve
+find / -user steve -exec cp -p {} /root/found.steve \; 2>/dev/null
+
+9. Find occurrences of "Listen" in apache config. (5 marks)
+Store output in /root/apache_listens
+
+✓ Solution & Explanation
+grep -ni "Listen" /etc/httpd/conf/httpd.conf > /root/apache_listens
+
+10. Create user with specific UID. (5 marks)
+• Username: roger
+• UID: 3456
+• Password: Train@456
+
+✓ Solution & Explanation
+useradd -u 3456 roger
+echo "Train@456" | passwd --stdin roger
+
+11. Create tar backup. (8 marks)
+Backup /opt/localdata → /root/localbackup.tar.gz
+
+✓ Solution & Explanation
+tar -czvf /root/localbackup.tar.gz /opt/localdata
+
+12. Set umask for adam: files read-only, directories read-only. (12 marks)
+Files default → 400
+Dirs default → 500
+
+✓ Solution & Explanation
+Add to /home/adam/.bashrc:
+umask 277
+Explanation:
+777 - 277 = 500 for directories
+666 - 277 = 400 for files
+
+13. Configure recurring jobs with systemd timer. (20 marks)
+Script: /usr/local/bin/event_logger
+Output: /root/logs/events.trc
+Timer: Every 1 minute
+
+✓ Solution & Explanation
+1. Script
+mkdir -p /root/logs
+
+echo "ls -l /tmp > /root/logs/events.trc" > /usr/local/bin/event_logger
+chmod +x /usr/local/bin/event_logger
+2. Service
+/etc/systemd/system/event_logger.service:
+[Unit]
+Description=Event Logger
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/event_logger
+3. Timer
+/etc/systemd/system/event_logger.timer:
+[Unit]
+Description=Run every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+
+[Install]
+WantedBy=multi-user.target
+Enable both:
+systemctl enable --now event_logger.timer
+
+Node-2 Questions
+==================================================
+
+1. Set root password. (5 marks)
+Password: TrainRoot@999
+✓ Solution
+Boot into rescue → mount → passwd root.
+
+2. Configure repository. (10 marks)
+file:///mnt/BaseOSRepo
+file:///mnt/AppRepo
+
+Same solution as Node-1 (adjusted paths).
+
+3. Create swap on /dev/sdb (size: 800 MiB). (15 marks)
+✓ Solution
+parted /dev/sdb mklabel gpt
+parted /dev/sdb mkpart primary linux-swap 1MiB 801MiB
+mkswap /dev/sdb1
+echo "/dev/sdb1 swap swap defaults 0 0" >> /etc/fstab
+swapon -a
+
+4. Resize LV to 300 MiB. (15 marks)
+Assume LV: /dev/vgdata/lvstore
+✓ Solution
+lvresize -L 300M /dev/vgdata/lvstore
+xfs_growfs /mountpoint
+
+5. Configure Flatpak. (20 marks)
+Repository name: flattrain
+User: student
+Install app: codium
+✓ Solution
+As student:
+su - student
+flatpak remote-add --user flattrain https://flathub.org/repo/flathub.flatpakrepo
+flatpak install --user flattrain com.vscodium.codium -y
+
+6. Create LV (name: testqa). (25 marks)
+• VG: qavg
+• Extents: 60
+• PE size: 16 MiB
+• Disk: /dev/sdc
+• Filesystem: ext3
+• Mount at /mnt/testqa (persistent)
+✓ Solution
+pvcreate /dev/sdc
+vgcreate -s 16M qavg /dev/sdc
+lvcreate -l 60 -n testqa qavg
+mkfs.ext3 /dev/qavg/testqa
+mkdir /mnt/testqa
+echo "/dev/qavg/testqa /mnt/testqa ext3 defaults 0 0" >> /etc/fstab
+mount -a
+
+7. Set recommended tuned profile. (10 marks)
+✓ Solution
+dnf install tuned -y
+tuned-adm recommend
+tuned-adm profile <recommended_profile>

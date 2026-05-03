@@ -1,0 +1,5 @@
+Configure recurring jobs with systemd timer.
+
+Script: /usr/local/bin/event_logger
+Output: /root/logs/events.trc
+Timer: Every 1 minute

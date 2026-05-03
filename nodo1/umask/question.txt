@@ -1,0 +1,4 @@
+12. Set umask for adam: files read-only, directories read-only. (12 marks)
+Files default → 400
+Dirs default → 500
+

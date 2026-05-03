@@ -1,0 +1,1 @@
+Instale el servicio autofs en nodo2 y configure montaje automático vía NFSv4 de tal forma que el usuario qq pueda acceder a su directorio exportado desde nodo1 en el punto de montaje /mnt/autofs (por ejemplo, /mnt/autofs/qq), utilizando un mapa indirecto y el nombre de host nodo1.
